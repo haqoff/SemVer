@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using SemVer;
 
@@ -5,6 +6,23 @@ namespace SemVerParsingTests
 {
     public class Tests
     {
+        public static readonly IReadOnlyList<SemVersion> VersionsInOrder = new List<SemVersion>()
+        {
+            new SemVersion(-2),
+            new SemVersion(0, 0, -1),
+            new SemVersion(0),
+            new SemVersion(0, 0, 1, "13"),
+            new SemVersion(0, 0, 1, ".a"),
+            new SemVersion(0, 0, 1, "b"),
+            new SemVersion(1, 0, 10, "alpha"),
+            new SemVersion(1, 2, 0, "alpha", "dev"),
+            new SemVersion(1, 2, 0, "nightly2"),
+            new SemVersion(1, 2),
+            new SemVersion(1, 2, 0, "", "nightly"),
+            new SemVersion(1, 2, 1, "99"),
+            new SemVersion(1, 2, 1)
+        }.AsReadOnly();
+
         public static readonly (string version, int major, int minor, int patch, string preRelease, string build)[]
             RegexValidExamples =
             {
@@ -83,6 +101,22 @@ namespace SemVerParsingTests
                 Assert.True(ver1 != prevVer);
 
                 prevVer = ver1;
+            }
+        }
+
+        [Test]
+        public void TestOperatorGreaterAndLess()
+        {
+            for (var i = 1; i < VersionsInOrder.Count; i++)
+            {
+                var first = VersionsInOrder[i - 1];
+                var second = VersionsInOrder[i];
+
+                Assert.True(second > first, "{0} > {1}", second, first);
+                Assert.True(second >= first, "{0} >= {1}", second, first);
+
+                Assert.True(first < second, "{0} < {1}", first, second);
+                Assert.True(first <= second, "{0} <= {1}", first, second);
             }
         }
 

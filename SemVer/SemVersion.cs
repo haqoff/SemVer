@@ -138,6 +138,97 @@ namespace SemVer
             return !(ver1 == ver2);
         }
 
+        public static bool operator >(SemVersion ver1, SemVersion ver2)
+        {
+            if (ReferenceEquals(ver1, ver2)) return false;
+            if (ver1 is null) return false;
+            if (ver2 is null) return true;
+            return Compare(ver1, ver2) > 0;
+        }
+
+        public static bool operator <(SemVersion ver1, SemVersion ver2)
+        {
+            if (ReferenceEquals(ver1, ver2)) return false;
+            if (ver1 is null) return true;
+            if (ver2 is null) return false;
+            return Compare(ver1, ver2) < 0;
+        }
+
+        public static bool operator >=(SemVersion ver1, SemVersion ver2)
+        {
+            return ver1 > ver2 || ver1 == ver2;
+        }
+
+        public static bool operator <=(SemVersion ver1, SemVersion ver2)
+        {
+            return ver1 < ver2 || ver1 == ver2;
+        }
+
+        public static int Compare(SemVersion that, SemVersion other)
+        {
+            var r = CompareByPrecedence(that, other);
+            if (r != 0) return r;
+
+            return CompareComponent(that.Build, other.Build);
+        }
+
+        public static int CompareByPrecedence(SemVersion that, SemVersion other)
+        {
+            var r = that.Major.CompareTo(other.Major);
+            if (r != 0) return r;
+
+            r = that.Minor.CompareTo(other.Minor);
+            if (r != 0) return r;
+
+            r = that.Patch.CompareTo(other.Patch);
+            if (r != 0) return r;
+
+            return CompareComponent(that.PreRelease, other.PreRelease, true);
+        }
+
+        private static int CompareComponent(string a, string b, bool nonemptyIsLower = false)
+        {
+            var aEmpty = string.IsNullOrEmpty(a);
+            var bEmpty = string.IsNullOrEmpty(b);
+            if (aEmpty && bEmpty)
+                return 0;
+
+            if (aEmpty)
+                return nonemptyIsLower ? 1 : -1;
+            if (bEmpty)
+                return nonemptyIsLower ? -1 : 1;
+
+            var aComps = a.Split('.');
+            var bComps = b.Split('.');
+
+            var minLen = Math.Min(aComps.Length, bComps.Length);
+            for (int i = 0; i < minLen; i++)
+            {
+                var ac = aComps[i];
+                var bc = bComps[i];
+                var aIsNum = int.TryParse(ac, out var aNum);
+                var bIsNum = int.TryParse(bc, out var bNum);
+                int r;
+                if (aIsNum && bIsNum)
+                {
+                    r = aNum.CompareTo(bNum);
+                    if (r != 0) return r;
+                }
+                else
+                {
+                    if (aIsNum)
+                        return -1;
+                    if (bIsNum)
+                        return 1;
+                    r = string.CompareOrdinal(ac, bc);
+                    if (r != 0)
+                        return r;
+                }
+            }
+
+            return aComps.Length.CompareTo(bComps.Length);
+        }
+
         /// <summary>
         /// Получает текущую версию в строковом представлении.
         /// </summary>
