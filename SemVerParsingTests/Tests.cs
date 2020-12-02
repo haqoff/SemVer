@@ -54,7 +54,7 @@ namespace SemVerParsingTests
 
 
         [Test]
-        public void TestValidVersions()
+        public void TestValidVersionsRaw()
         {
             foreach (var example in RegexValidExamples)
             {
@@ -65,6 +65,24 @@ namespace SemVerParsingTests
                 Assert.AreEqual(example.patch, actual.Patch);
                 Assert.AreEqual(example.preRelease, actual.PreRelease);
                 Assert.AreEqual(example.build, actual.Build);
+            }
+        }
+
+        [Test]
+        public void TestValidVersionsEqualityOperator()
+        {
+            SemVersion prevVer = null;
+
+            foreach (var example in RegexValidExamples)
+            {
+                var ver1 = SemVersion.Parse(example.version);
+                var ver2 = new SemVersion(example.major, example.minor, example.patch, example.preRelease, example.build);
+
+                Assert.True(ver1 == ver2);
+                Assert.True(ver1.Equals(ver2));
+                Assert.True(ver1 != prevVer);
+
+                prevVer = ver1;
             }
         }
 

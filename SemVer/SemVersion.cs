@@ -92,6 +92,52 @@ namespace SemVer
             return new SemVersion(major, minor, patch, preRelease, build);
         }
 
+        protected bool Equals(SemVersion other)
+        {
+            return Major == other.Major && Minor == other.Minor && Patch == other.Patch && PreRelease == other.PreRelease &&
+                   Build == other.Build;
+        }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((SemVersion) obj);
+        }
+
+        /// <inheritdoc />
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Major, Minor, Patch, PreRelease, Build);
+        }
+
+        public static bool operator ==(SemVersion ver1, SemVersion ver2)
+        {
+            if (ReferenceEquals(ver1, ver2))
+            {
+                return true;
+            }
+
+            if (ReferenceEquals(ver1, null))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(ver2, null))
+            {
+                return false;
+            }
+
+            return ver1.Equals(ver2);
+        }
+
+        public static bool operator !=(SemVersion ver1, SemVersion ver2)
+        {
+            return !(ver1 == ver2);
+        }
+
         /// <summary>
         /// Получает текущую версию в строковом представлении.
         /// </summary>
