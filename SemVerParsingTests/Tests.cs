@@ -105,18 +105,32 @@ namespace SemVerParsingTests
         }
 
         [Test]
-        public void TestOperatorGreaterAndLess()
+        public void TestOperatorsGreaterLessAndEqual()
         {
-            for (var i = 1; i < VersionsInOrder.Count; i++)
+            for (var ver1Index = 0; ver1Index < VersionsInOrder.Count; ver1Index++)
             {
-                var first = VersionsInOrder[i - 1];
-                var second = VersionsInOrder[i];
+                for (var ver2Index = 0; ver2Index < VersionsInOrder.Count; ver2Index++)
+                {
+                    var first = VersionsInOrder[ver1Index];
+                    var second = VersionsInOrder[ver2Index];
 
-                Assert.True(second > first, "{0} > {1}", second, first);
-                Assert.True(second >= first, "{0} >= {1}", second, first);
+                    if (ver1Index < ver2Index)
+                    {
+                        Assert.True(first < second, "{0} < {1}", first, second);
+                        Assert.True(first <= second, "{0} <= {1}", first, second);
+                    }
 
-                Assert.True(first < second, "{0} < {1}", first, second);
-                Assert.True(first <= second, "{0} <= {1}", first, second);
+                    if (ver1Index > ver2Index)
+                    {
+                        Assert.True(first > second, "{0} > {1}", first, second);
+                        Assert.True(first >= second, "{0} >= {1}", first, second);
+                    }
+
+                    if (ver1Index == ver2Index)
+                    {
+                        Assert.True(first == second, "{0} == {1}", first, second);
+                    }
+                }
             }
         }
 
