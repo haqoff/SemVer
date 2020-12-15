@@ -8,8 +8,6 @@ namespace SemVerParsingTests
     {
         public static readonly IReadOnlyList<SemVersion> VersionsInOrder = new List<SemVersion>()
         {
-            new SemVersion(-2),
-            new SemVersion(0, 0, -1),
             new SemVersion(0),
             new SemVersion(0, 0, 1, "13"),
             new SemVersion(0, 0, 1, ".a"),
@@ -69,6 +67,38 @@ namespace SemVerParsingTests
             "1.0.0-alpha..1",
             "1.0.0-alpha...1"
         };
+
+        public static (string rangeString, SemVersionRange range)[] GetValidHyphenRanges()
+        {
+            var ranges = new List<(string rangeString, SemVersionRange)>();
+            for (var i = 0; i < VersionsInOrder.Count; i++)
+            {
+                var first = VersionsInOrder[i];
+                for (var j = i; j < VersionsInOrder.Count; j++)
+                {
+                    var second = VersionsInOrder[j];
+                    var range = new SemVersionRange(first, second);
+
+                    var stringWithBrackets = $"[ {first} {second} ]";
+                    var stringF = $"{first} {second}";
+
+                    var stringWithBracketsWithDash = $"[{first} - {second}]";
+                    var stringFWithDash = $"{first} - {second}";
+
+                    var stringWithBracketsAndSigns = $"[>={first} <={second}]";
+                    var stringFSigns = $">={first} <={second}";
+
+                    ranges.Add((stringWithBrackets, range));
+                    ranges.Add((stringF, range));
+                    ranges.Add((stringWithBracketsWithDash, range));
+                    ranges.Add((stringFWithDash, range));
+                    ranges.Add((stringWithBracketsAndSigns, range));
+                    ranges.Add((stringFSigns, range));
+                }
+            }
+
+            return ranges.ToArray();
+        }
 
 
         [Test]
@@ -147,6 +177,101 @@ namespace SemVerParsingTests
                 catch
                 {
                     Assert.Pass();
+                }
+            }
+        }
+
+        [Test]
+        public void TestValidHyphenRangesParsing()
+        {
+            var source = GetValidHyphenRanges();
+            foreach (var (rangeString, expectedRange) in source)
+            {
+                Assert.DoesNotThrow(() =>
+                {
+                    var parsed = SemVersionRange.Parse(rangeString);
+                    Assert.AreEqual(expectedRange, parsed);
+                }, "Ошибка в {0}", expectedRange);
+            }
+        }
+
+        [Test]
+        public void TestContainsVersion()
+        {
+            for (int rangeStartIndex = 0; rangeStartIndex < VersionsInOrder.Count; rangeStartIndex++)
+            {
+                for (int rangeEndIndex = rangeStartIndex; rangeEndIndex < VersionsInOrder.Count; rangeEndIndex++)
+                {
+                    var range = new SemVersionRange(VersionsInOrder[rangeStartIndex], VersionsInOrder[rangeEndIndex]);
+                    for (int versionInRangeIndex = rangeStartIndex; versionInRangeIndex <= rangeEndIndex; versionInRangeIndex++)
+                    {
+                        Assert.IsTrue(range.Contains(VersionsInOrder[versionInRangeIndex]));
+                    }
+
+                    for (int versionBeforeRangeIndex = 0; versionBeforeRangeIndex < rangeStartIndex; versionBeforeRangeIndex++)
+                    {
+                        Assert.IsFalse(range.Contains(VersionsInOrder[versionBeforeRangeIndex]));
+                    }
+
+                    for (int versionAfterRangeIndex = rangeEndIndex + 1;
+                        versionAfterRangeIndex < VersionsInOrder.Count;
+                        versionAfterRangeIndex++)
+                    {
+                        Assert.IsFalse(range.Contains(VersionsInOrder[versionAfterRangeIndex]));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void TestContainsRange()
+        {
+            for (int mainRangeStartIndex = 0; mainRangeStartIndex < VersionsInOrder.Count; mainRangeStartIndex++)
+            {
+                for (int mainRangeEndIndex = mainRangeStartIndex; mainRangeEndIndex < VersionsInOrder.Count; mainRangeEndIndex++)
+                {
+                    var mainRange = new SemVersionRange(VersionsInOrder[mainRangeStartIndex], VersionsInOrder[mainRangeEndIndex]);
+
+                    // внутри
+                    for (int subRangeStartIndex = mainRangeStartIndex;
+                        subRangeStartIndex <= mainRangeEndIndex;
+                        subRangeStartIndex++)
+                    {
+                        for (int subRangeEndIndex = subRangeStartIndex; subRangeEndIndex <= mainRangeEndIndex; subRangeEndIndex++)
+                        {
+                            var subRange = new SemVersionRange(VersionsInOrder[subRangeStartIndex],
+                                VersionsInOrder[subRangeEndIndex]);
+                            Assert.IsTrue(mainRange.Contains(subRange));
+                        }
+                    }
+
+                    // слева
+                    for (int beforeRangeStartIndex = 0; beforeRangeStartIndex < mainRangeStartIndex; beforeRangeStartIndex++)
+                    {
+                        for (int beforeRangeEndIndex = beforeRangeStartIndex;
+                            beforeRangeEndIndex < mainRangeStartIndex;
+                            beforeRangeEndIndex++)
+                        {
+                            var beforeRange = new SemVersionRange(VersionsInOrder[beforeRangeStartIndex],
+                                VersionsInOrder[beforeRangeEndIndex]);
+                            Assert.IsFalse(mainRange.Contains(beforeRange));
+                        }
+                    }
+
+                    // справа
+                    for (int afterRangeStartIndex = mainRangeEndIndex + 1;
+                        afterRangeStartIndex < VersionsInOrder.Count;
+                        afterRangeStartIndex++)
+                    {
+                        for (int afterRangeEndIndex = afterRangeStartIndex;
+                            afterRangeEndIndex < VersionsInOrder.Count;
+                            afterRangeEndIndex++)
+                        {
+                            var afterRange = new SemVersionRange(VersionsInOrder[afterRangeStartIndex],
+                                VersionsInOrder[afterRangeEndIndex]);
+                            Assert.IsFalse(mainRange.Contains(afterRange));
+                        }
+                    }
                 }
             }
         }

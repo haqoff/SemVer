@@ -39,12 +39,12 @@ namespace SemVer
         public string Build { get; }
 
 
-        private static readonly Regex ParseEx =
-            new Regex(@"^(?<major>\d+)" +
+        public static readonly Regex ParseEx =
+            new Regex(@"(?<major>\d+)" +
                       @"(?>\.(?<minor>\d+))?" +
                       @"(?>\.(?<patch>\d+))?" +
                       @"(?>\-(?<pre>[0-9A-Za-z\-\.]+))?" +
-                      @"(?>\+(?<build>[0-9A-Za-z\-\.]+))?$",
+                      @"(?>\+(?<build>[0-9A-Za-z\-\.]+))?",
                 RegexOptions.CultureInvariant | RegexOptions.Compiled | RegexOptions.ExplicitCapture,
                 TimeSpan.FromSeconds(0.5));
 
